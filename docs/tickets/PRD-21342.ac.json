@@ -4,196 +4,308 @@
     "ac": "AC1",
     "text": "Given a valid X-Digitalocean-Token and DigitalOcean returns 2 namespaces, When digitalocean_list_namespaces is called, Then both namespaces are returned as-is.",
     "type": "auto",
-    "tests": ["tests/test_tools.py::test_list_namespaces_returns_upstream_items"]
+    "tests": [
+      "tests/test_tools.py::test_list_namespaces_returns_upstream_items"
+    ],
+    "result": "pass",
+    "evidence": "tests/test_tools.py::test_list_namespaces_returns_upstream_items PASSED. pytest -v, all 28 automated cases PASSED in a single run (16.19s, no failures/skips); see docs/tickets/PRD-21342.md Self-test for the full command output."
   },
   {
     "id": "TC2",
     "ac": "AC1",
     "text": "Given DigitalOcean returns zero namespaces, When digitalocean_list_namespaces is called, Then the tool returns an empty array, not an error.",
     "type": "auto",
-    "tests": ["tests/test_tools.py::test_list_namespaces_empty_is_not_error"]
+    "tests": [
+      "tests/test_tools.py::test_list_namespaces_empty_is_not_error"
+    ],
+    "result": "pass",
+    "evidence": "tests/test_tools.py::test_list_namespaces_empty_is_not_error PASSED. pytest -v, all 28 automated cases PASSED in a single run (16.19s, no failures/skips); see docs/tickets/PRD-21342.md Self-test for the full command output."
   },
   {
     "id": "TC3",
     "ac": "AC2",
     "text": "Given label and region, When digitalocean_create_namespace is called, Then the body is POSTed and the created namespace is returned.",
     "type": "auto",
-    "tests": ["tests/test_tools.py::test_create_namespace_posts_label_and_region"]
+    "tests": [
+      "tests/test_tools.py::test_create_namespace_posts_label_and_region"
+    ],
+    "result": "pass",
+    "evidence": "tests/test_tools.py::test_create_namespace_posts_label_and_region PASSED. pytest -v, all 28 automated cases PASSED in a single run (16.19s, no failures/skips); see docs/tickets/PRD-21342.md Self-test for the full command output."
   },
   {
     "id": "TC4",
     "ac": "AC2",
     "text": "Given region is omitted, When digitalocean_create_namespace is called, Then the tool returns invalid_argument without calling DigitalOcean.",
     "type": "auto",
-    "tests": ["tests/test_tools.py::test_create_namespace_missing_region_is_invalid_argument"]
+    "tests": [
+      "tests/test_tools.py::test_create_namespace_missing_region_is_invalid_argument"
+    ],
+    "result": "pass",
+    "evidence": "tests/test_tools.py::test_create_namespace_missing_region_is_invalid_argument PASSED. pytest -v, all 28 automated cases PASSED in a single run (16.19s, no failures/skips); see docs/tickets/PRD-21342.md Self-test for the full command output."
   },
   {
     "id": "TC5",
     "ac": "AC3",
     "text": "Given an existing namespace_id, When digitalocean_get_namespace is called, Then its details are returned.",
     "type": "auto",
-    "tests": ["tests/test_tools.py::test_get_namespace_returns_details"]
+    "tests": [
+      "tests/test_tools.py::test_get_namespace_returns_details"
+    ],
+    "result": "pass",
+    "evidence": "tests/test_tools.py::test_get_namespace_returns_details PASSED. pytest -v, all 28 automated cases PASSED in a single run (16.19s, no failures/skips); see docs/tickets/PRD-21342.md Self-test for the full command output."
   },
   {
     "id": "TC6",
     "ac": "AC3,AC14",
     "text": "Given a namespace_id DigitalOcean 404s on, When digitalocean_get_namespace is called, Then the tool returns a structured not_found, not a raw 404 or 500.",
     "type": "auto",
-    "tests": ["tests/test_tools.py::test_get_namespace_not_found_is_mapped"]
+    "tests": [
+      "tests/test_tools.py::test_get_namespace_not_found_is_mapped"
+    ],
+    "result": "pass",
+    "evidence": "tests/test_tools.py::test_get_namespace_not_found_is_mapped PASSED. pytest -v, all 28 automated cases PASSED in a single run (16.19s, no failures/skips); see docs/tickets/PRD-21342.md Self-test for the full command output."
   },
   {
     "id": "TC7",
     "ac": "AC4",
     "text": "Given an existing namespace_id, When digitalocean_delete_namespace is called, Then the matching DELETE is issued and success is confirmed.",
     "type": "auto",
-    "tests": ["tests/test_tools.py::test_delete_namespace_deletes_given_id"]
+    "tests": [
+      "tests/test_tools.py::test_delete_namespace_deletes_given_id"
+    ],
+    "result": "pass",
+    "evidence": "tests/test_tools.py::test_delete_namespace_deletes_given_id PASSED. pytest -v, all 28 automated cases PASSED in a single run (16.19s, no failures/skips); see docs/tickets/PRD-21342.md Self-test for the full command output."
   },
   {
     "id": "TC8",
     "ac": "AC4",
     "text": "Given no namespace_id is supplied, When digitalocean_delete_namespace is called, Then the tool rejects the call before any upstream request (invalid_argument).",
     "type": "auto",
-    "tests": ["tests/test_tools.py::test_delete_namespace_requires_explicit_id"]
+    "tests": [
+      "tests/test_tools.py::test_delete_namespace_requires_explicit_id"
+    ],
+    "result": "pass",
+    "evidence": "tests/test_tools.py::test_delete_namespace_requires_explicit_id PASSED. pytest -v, all 28 automated cases PASSED in a single run (16.19s, no failures/skips); see docs/tickets/PRD-21342.md Self-test for the full command output."
   },
   {
     "id": "TC9",
     "ac": "AC5",
     "text": "Given an existing namespace_id with 2 triggers, When digitalocean_list_triggers is called, Then both triggers are returned.",
     "type": "auto",
-    "tests": ["tests/test_tools.py::test_list_triggers_returns_upstream_items"]
+    "tests": [
+      "tests/test_tools.py::test_list_triggers_returns_upstream_items"
+    ],
+    "result": "pass",
+    "evidence": "tests/test_tools.py::test_list_triggers_returns_upstream_items PASSED. pytest -v, all 28 automated cases PASSED in a single run (16.19s, no failures/skips); see docs/tickets/PRD-21342.md Self-test for the full command output."
   },
   {
     "id": "TC10",
     "ac": "AC5",
     "text": "Given a namespace with zero triggers, When digitalocean_list_triggers is called, Then the tool returns an empty array, not an error.",
     "type": "auto",
-    "tests": ["tests/test_tools.py::test_list_triggers_empty_is_not_error"]
+    "tests": [
+      "tests/test_tools.py::test_list_triggers_empty_is_not_error"
+    ],
+    "result": "pass",
+    "evidence": "tests/test_tools.py::test_list_triggers_empty_is_not_error PASSED. pytest -v, all 28 automated cases PASSED in a single run (16.19s, no failures/skips); see docs/tickets/PRD-21342.md Self-test for the full command output."
   },
   {
     "id": "TC11",
     "ac": "AC6",
     "text": "Given name, function, type, is_enabled, scheduled_details, When digitalocean_create_trigger is called, Then the full body is posted and the created trigger returned.",
     "type": "auto",
-    "tests": ["tests/test_tools.py::test_create_trigger_posts_full_body"]
+    "tests": [
+      "tests/test_tools.py::test_create_trigger_posts_full_body"
+    ],
+    "result": "pass",
+    "evidence": "tests/test_tools.py::test_create_trigger_posts_full_body PASSED. pytest -v, all 28 automated cases PASSED in a single run (16.19s, no failures/skips); see docs/tickets/PRD-21342.md Self-test for the full command output."
   },
   {
     "id": "TC12",
     "ac": "AC6",
     "text": "Given a required field (e.g. type) is missing, When digitalocean_create_trigger is called, Then the tool returns invalid_argument without calling DigitalOcean.",
     "type": "auto",
-    "tests": ["tests/test_tools.py::test_create_trigger_missing_required_field_is_invalid_argument"]
+    "tests": [
+      "tests/test_tools.py::test_create_trigger_missing_required_field_is_invalid_argument"
+    ],
+    "result": "pass",
+    "evidence": "tests/test_tools.py::test_create_trigger_missing_required_field_is_invalid_argument PASSED. pytest -v, all 28 automated cases PASSED in a single run (16.19s, no failures/skips); see docs/tickets/PRD-21342.md Self-test for the full command output."
   },
   {
     "id": "TC13",
     "ac": "AC7",
     "text": "Given an existing trigger_name, When digitalocean_get_trigger is called, Then its details are returned.",
     "type": "auto",
-    "tests": ["tests/test_tools.py::test_get_trigger_returns_details"]
+    "tests": [
+      "tests/test_tools.py::test_get_trigger_returns_details"
+    ],
+    "result": "pass",
+    "evidence": "tests/test_tools.py::test_get_trigger_returns_details PASSED. pytest -v, all 28 automated cases PASSED in a single run (16.19s, no failures/skips); see docs/tickets/PRD-21342.md Self-test for the full command output."
   },
   {
     "id": "TC14",
     "ac": "AC7,AC14",
     "text": "Given a trigger_name DigitalOcean 404s on, When digitalocean_get_trigger is called, Then the tool returns a structured not_found.",
     "type": "auto",
-    "tests": ["tests/test_tools.py::test_get_trigger_not_found_is_mapped"]
+    "tests": [
+      "tests/test_tools.py::test_get_trigger_not_found_is_mapped"
+    ],
+    "result": "pass",
+    "evidence": "tests/test_tools.py::test_get_trigger_not_found_is_mapped PASSED. pytest -v, all 28 automated cases PASSED in a single run (16.19s, no failures/skips); see docs/tickets/PRD-21342.md Self-test for the full command output."
   },
   {
     "id": "TC15",
     "ac": "AC8",
     "text": "Given one or more updatable fields, When digitalocean_update_trigger is called, Then only those fields are sent via PUT and the updated trigger is returned.",
     "type": "auto",
-    "tests": ["tests/test_tools.py::test_update_trigger_sends_only_given_fields"]
+    "tests": [
+      "tests/test_tools.py::test_update_trigger_sends_only_given_fields"
+    ],
+    "result": "pass",
+    "evidence": "tests/test_tools.py::test_update_trigger_sends_only_given_fields PASSED. pytest -v, all 28 automated cases PASSED in a single run (16.19s, no failures/skips); see docs/tickets/PRD-21342.md Self-test for the full command output."
   },
   {
     "id": "TC16",
     "ac": "AC9",
     "text": "Given an existing trigger, When digitalocean_delete_trigger is called, Then it is deleted and confirmed.",
     "type": "auto",
-    "tests": ["tests/test_tools.py::test_delete_trigger_deletes_named_trigger"]
+    "tests": [
+      "tests/test_tools.py::test_delete_trigger_deletes_named_trigger"
+    ],
+    "result": "pass",
+    "evidence": "tests/test_tools.py::test_delete_trigger_deletes_named_trigger PASSED. pytest -v, all 28 automated cases PASSED in a single run (16.19s, no failures/skips); see docs/tickets/PRD-21342.md Self-test for the full command output."
   },
   {
     "id": "TC17",
     "ac": "AC9",
     "text": "Given no trigger_name is supplied, When digitalocean_delete_trigger is called, Then the tool rejects the call before any upstream request.",
     "type": "auto",
-    "tests": ["tests/test_tools.py::test_delete_trigger_requires_explicit_name"]
+    "tests": [
+      "tests/test_tools.py::test_delete_trigger_requires_explicit_name"
+    ],
+    "result": "pass",
+    "evidence": "tests/test_tools.py::test_delete_trigger_requires_explicit_name PASSED. pytest -v, all 28 automated cases PASSED in a single run (16.19s, no failures/skips); see docs/tickets/PRD-21342.md Self-test for the full command output."
   },
   {
     "id": "TC18",
     "ac": "AC10",
     "text": "Given an existing namespace_id with 2 access keys, When digitalocean_list_access_keys is called, Then both keys are returned, including an empty array when there are none.",
     "type": "auto",
-    "tests": ["tests/test_tools.py::test_list_access_keys_returns_upstream_items"]
+    "tests": [
+      "tests/test_tools.py::test_list_access_keys_returns_upstream_items"
+    ],
+    "result": "pass",
+    "evidence": "tests/test_tools.py::test_list_access_keys_returns_upstream_items PASSED. pytest -v, all 28 automated cases PASSED in a single run (16.19s, no failures/skips); see docs/tickets/PRD-21342.md Self-test for the full command output."
   },
   {
     "id": "TC19",
     "ac": "AC11",
     "text": "Given a key configuration, When digitalocean_create_access_key is called, Then the key is created, its details (including the one-time value) are returned, and the value never appears in our logs.",
     "type": "auto",
-    "tests": ["tests/test_tools.py::test_create_access_key_value_not_logged"]
+    "tests": [
+      "tests/test_tools.py::test_create_access_key_value_not_logged"
+    ],
+    "result": "pass",
+    "evidence": "tests/test_tools.py::test_create_access_key_value_not_logged PASSED. pytest -v, all 28 automated cases PASSED in a single run (16.19s, no failures/skips); see docs/tickets/PRD-21342.md Self-test for the full command output."
   },
   {
     "id": "TC20",
     "ac": "AC12",
     "text": "Given an existing key_id, When digitalocean_update_access_key is called, Then the update is applied and the updated key returned.",
     "type": "auto",
-    "tests": ["tests/test_tools.py::test_update_access_key_applies_update"]
+    "tests": [
+      "tests/test_tools.py::test_update_access_key_applies_update"
+    ],
+    "result": "pass",
+    "evidence": "tests/test_tools.py::test_update_access_key_applies_update PASSED. pytest -v, all 28 automated cases PASSED in a single run (16.19s, no failures/skips); see docs/tickets/PRD-21342.md Self-test for the full command output."
   },
   {
     "id": "TC21",
     "ac": "AC13",
     "text": "Given an existing key_id, When digitalocean_delete_access_key is called, Then it is deleted and confirmed.",
     "type": "auto",
-    "tests": ["tests/test_tools.py::test_delete_access_key_deletes_given_id"]
+    "tests": [
+      "tests/test_tools.py::test_delete_access_key_deletes_given_id"
+    ],
+    "result": "pass",
+    "evidence": "tests/test_tools.py::test_delete_access_key_deletes_given_id PASSED. pytest -v, all 28 automated cases PASSED in a single run (16.19s, no failures/skips); see docs/tickets/PRD-21342.md Self-test for the full command output."
   },
   {
     "id": "TC22",
     "ac": "AC13",
     "text": "Given no key_id is supplied, When digitalocean_delete_access_key is called, Then the tool rejects the call before any upstream request.",
     "type": "auto",
-    "tests": ["tests/test_tools.py::test_delete_access_key_requires_explicit_id"]
+    "tests": [
+      "tests/test_tools.py::test_delete_access_key_requires_explicit_id"
+    ],
+    "result": "pass",
+    "evidence": "tests/test_tools.py::test_delete_access_key_requires_explicit_id PASSED. pytest -v, all 28 automated cases PASSED in a single run (16.19s, no failures/skips); see docs/tickets/PRD-21342.md Self-test for the full command output."
   },
   {
     "id": "TC23",
     "ac": "AC15",
     "text": "Given a request with no X-Digitalocean-Token header, When any tool is called, Then the response is 401 and lists the required header name, never 500.",
     "type": "auto",
-    "tests": ["tests/test_middleware.py::test_missing_credential_header_is_401_with_header_name"]
+    "tests": [
+      "tests/test_middleware.py::test_missing_credential_header_is_401_with_header_name"
+    ],
+    "result": "pass",
+    "evidence": "tests/test_middleware.py::test_missing_credential_header_is_401_with_header_name PASSED. pytest -v, all 28 automated cases PASSED in a single run (16.19s, no failures/skips); see docs/tickets/PRD-21342.md Self-test for the full command output."
   },
   {
     "id": "TC24",
     "ac": "AC16",
     "text": "Given DigitalOcean returns 429 once then 200, When a tool is called, Then the client retries and the eventual success is returned to the caller.",
     "type": "auto",
-    "tests": ["tests/test_tools.py::test_transient_429_is_retried_then_succeeds"]
+    "tests": [
+      "tests/test_tools.py::test_transient_429_is_retried_then_succeeds"
+    ],
+    "result": "pass",
+    "evidence": "tests/test_tools.py::test_transient_429_is_retried_then_succeeds PASSED. pytest -v, all 28 automated cases PASSED in a single run (16.19s, no failures/skips); see docs/tickets/PRD-21342.md Self-test for the full command output."
   },
   {
     "id": "TC25",
     "ac": "AC16",
     "text": "Given DigitalOcean returns 503 for every attempt, When a tool is called, Then after bounded retries the tool returns a structured upstream_error within the time budget, never an unhandled exception.",
     "type": "auto",
-    "tests": ["tests/test_tools.py::test_sustained_5xx_returns_bounded_upstream_error"]
+    "tests": [
+      "tests/test_tools.py::test_sustained_5xx_returns_bounded_upstream_error"
+    ],
+    "result": "pass",
+    "evidence": "tests/test_tools.py::test_sustained_5xx_returns_bounded_upstream_error PASSED. pytest -v, all 28 automated cases PASSED in a single run (16.19s, no failures/skips); see docs/tickets/PRD-21342.md Self-test for the full command output."
   },
   {
     "id": "TC26",
     "ac": "AC17",
     "text": "Given two sequential requests carry two different tokens (tenant A, tenant B) against two different mocked upstream responses, When each calls digitalocean_list_namespaces, Then tenant A never receives tenant B's data and the credential contextvar is reset between requests. (multi-tenant/credential-isolation anchor, OWASP API-security adjacent)",
     "type": "auto",
-    "tests": ["tests/test_middleware.py::test_credential_context_isolated_across_requests"]
+    "tests": [
+      "tests/test_middleware.py::test_credential_context_isolated_across_requests"
+    ],
+    "result": "pass",
+    "evidence": "tests/test_middleware.py::test_credential_context_isolated_across_requests PASSED. pytest -v, all 28 automated cases PASSED in a single run (16.19s, no failures/skips); see docs/tickets/PRD-21342.md Self-test for the full command output."
   },
   {
     "id": "TC27",
     "ac": "AC18",
     "text": "Given DigitalOcean is unreachable (mocked timeout/connection error), When GET /health is called with no credential header, Then it still returns 200 {\"status\":\"ok\"}.",
     "type": "auto",
-    "tests": ["tests/test_middleware.py::test_health_independent_of_upstream_reachability"]
+    "tests": [
+      "tests/test_middleware.py::test_health_independent_of_upstream_reachability"
+    ],
+    "result": "pass",
+    "evidence": "tests/test_middleware.py::test_health_independent_of_upstream_reachability PASSED. pytest -v, all 28 automated cases PASSED in a single run (16.19s, no failures/skips); see docs/tickets/PRD-21342.md Self-test for the full command output."
   },
   {
     "id": "TC28",
     "ac": "AC19",
     "text": "Given the generated tools/list, When inspected, Then every list_*/get_* tool has readOnlyHint true and every delete_* tool has destructiveHint true.",
     "type": "auto",
-    "tests": ["tests/test_tools.py::test_tools_list_semantic_hints_snapshot"]
+    "tests": [
+      "tests/test_tools.py::test_tools_list_semantic_hints_snapshot"
+    ],
+    "result": "pass",
+    "evidence": "tests/test_tools.py::test_tools_list_semantic_hints_snapshot PASSED. pytest -v, all 28 automated cases PASSED in a single run (16.19s, no failures/skips); see docs/tickets/PRD-21342.md Self-test for the full command output."
   },
   {
     "id": "TC29",

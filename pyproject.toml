@@ -1,0 +1,36 @@
+[project]
+name = "digitalocean-functions-mcp"
+version = "0.1.0"
+description = "MCP server exposing DigitalOcean Functions (namespaces, triggers, namespace access keys) to MSPbots Agent platform clients"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.12"
+dependencies = [
+    "mcp[cli]>=1.9.0,<2.0.0",
+    "httpx>=0.27.0",
+    "pydantic-settings>=2.4.0",
+    "uvicorn>=0.30.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "respx>=0.21.0",
+]
+
+[project.scripts]
+digitalocean-functions-mcp = "digitalocean_functions_mcp.__main__:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/digitalocean_functions_mcp"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
