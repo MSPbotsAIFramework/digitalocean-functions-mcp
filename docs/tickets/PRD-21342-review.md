@@ -1,5 +1,7 @@
 # PRD-21342 · Code review
 
+Status: frozen @ 2145d53
+
 ## Round 1 · 2026-11-05 · reviewed ee0fa8d (base 0dc30c9)
 
 Verdict: changes requested
@@ -22,3 +24,22 @@ Only the must-fix item was addressed; the two suggestions are left as-is (not bl
    - Retest: `uv run pytest -q` → **29 passed** (28 prior cases unchanged + the 1 new regression test), 16.39s, 0 failed, 0 skipped.
    - Also reran: Chinese-character scan (`grep -rnP '[\x{4e00}-\x{9fff}]' --exclude-dir=.git --exclude-dir=.venv .`) — the only hits are quoted SOP text already present in this review file from round 1 (pre-existing, not touched by this fix, not production code); live smoke test (local `uv run python -m digitalocean_functions_mcp`) — `GET /health` → 200; `POST /mcp` with no credential header → 401; `POST /mcp initialize` + `tools/list` with a placeholder `X-Digitalocean-Token` → 200, returns all 13 tools with expected annotations. `gitleaks` is still not installed in this sandbox (same as round 0); no secret-shaped strings found by manual review of the diff.
    - Synced with `origin/main` before and after the fix (`git merge origin/main` → already up to date both times; `main` has not moved since the repo was created).
+
+## Round 2 · 2026-11-05 · reviewed 2145d53 (base 0dc30c9)
+
+Verdict: approved
+
+### Findings
+
+None. Re-reviewed `ee0fa8d...HEAD` (commits `cdeca32`, `2145d53`): the only code change is the round-1 fix in `client.py:108` and `client.py:119-120`, plus the new regression test. Verified independently (not just re-reading the round-1 Fixes note):
+
+- `client.py:108` (network-exception branch) and `client.py:119-120` (429/5xx branch) both now clamp the honored delay with `min(delay, max(0.0, MAX_TOTAL_SECONDS - elapsed))` before `elapsed += delay; await asyncio.sleep(delay)` — a single `Retry-After: 130` (or an oversized backoff) can no longer push one sleep past the remaining 110s budget.
+- Traced the loop for `Retry-After: 130` at `elapsed=0`: clamped delay = `min(130, 110) = 110` → `elapsed = 110` → next iteration's `if elapsed >= MAX_TOTAL_SECONDS: break` fires before a second HTTP call, so the call ends in a bounded `upstream_error` instead of sleeping ~130s. Matches AC16 and SOP §5's < 120s total-call-time rule.
+- `tests/test_tools.py::test_large_retry_after_is_capped_to_remaining_budget` exercises exactly this path (429 with `Retry-After: 130`, `asyncio.sleep` patched to record without waiting) and asserts the clamp, the single HTTP call, and the bounded `upstream_error`. Independently reran `uv run pytest -q` in this worktree: **29 passed, 0 failed, 16.37s** — matches the round-1 Fixes note.
+- Diff scope is exactly the fix: `client.py` (+5/-1), `tests/test_tools.py` (+35), `docs/tickets/PRD-21342-review.md` (+24). No other files touched, nothing outside the must-fix's scope.
+- The two round-1 suggestions (list-tool `limit` param, raw-string truncation fallback) were left as-is, as stated — correct, they were marked non-blocking and weren't requested.
+- `main` has not moved since round 1 (`0dc30c9`), so no resync was needed before merge.
+
+### Fixes
+
+N/A — this round found nothing new to fix.
