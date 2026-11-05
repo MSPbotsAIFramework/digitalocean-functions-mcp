@@ -1,0 +1,14 @@
+# PRD-21342 · Code review
+
+## Round 1 · 2026-11-05 · reviewed ee0fa8d (base 0dc30c9)
+
+Verdict: changes requested
+
+### Findings
+
+1. [must-fix] src/digitalocean_functions_mcp/client.py:116-120 — The retry loop honors DigitalOcean's `Retry-After` header without capping it against the remaining retry budget: `delay = _retry_after_seconds(response); ...; await asyncio.sleep(delay)` sleeps for whatever `Retry-After` says (confirmed with a one-off repro test: a single `429` response with `Retry-After: 130` keeps the call asleep past the 5s `asyncio.wait_for` cutoff used to probe it, i.e. it would run for ~130s on that one attempt alone). The budget check at line 100 (`if elapsed >= MAX_TOTAL_SECONDS: break`) only runs *before* the next attempt, not before the `sleep` that is about to happen, so a single large `Retry-After` value blows straight through it. This breaks AC16 ("retried with bounded backoff (total time under 120s) ... never an unhandled exception" — here it is a bounded-exception promise, not an unhandled one, but the stated time bound is violated) and the SOP §5 mandatory rule "单次工具调用总耗时（含重试）必须 < 120s". `test_transient_429_is_retried_then_succeeds` in `tests/test_tools.py` only exercises `Retry-After: 0`, so this gap was never exercised by the self-test suite. Fix: clamp the honored delay to what is left of the budget, e.g. `delay = min(delay, max(0.0, MAX_TOTAL_SECONDS - elapsed))` (and the same for the plain-backoff branch for consistency), so one slow/adversarial upstream response can no longer hold a tool call open past the 120s cap; add a test with a large `Retry-After` value to lock this in.
+
+### Suggestions (not blocking)
+
+2. [suggestion] src/digitalocean_functions_mcp/tools/namespaces.py:26, triggers.py:32, access_keys.py:30 — The three `list_*` tools return every item DigitalOcean's API gives back with no `limit`/`page` parameter, relying only on `serialization.dumps`'s defensive 20,000-character truncation. SOP §2.5 asks `list` tools for a `limit` param (default ≤50, hard cap ≤200) and "绝不无上限返回全量" (§2.5 is marked "应当", not "必须"). The tech design explicitly reasons about this (DigitalOcean documents no pagination for these three resource groups) and the char-cap fallback does prevent an unbounded response, so this is not blocking, but a `limit` parameter would be a cleaner fit for the SOP's token-economy guidance if DigitalOcean ever returns a very large list.
+3. [suggestion] src/digitalocean_functions_mcp/serialization.py:34-39 — When a payload larger than 20,000 characters is not a dict with a list-valued key (e.g. a single large object), `_truncate` falls back to a raw string slice (`text[:MAX_RESPONSE_CHARS]`), which can produce invalid JSON for the tool's caller. Noted as "not expected to be hit in practice" in the module docstring, which matches what DigitalOcean's documented response shapes look like for these three resource groups — leaving as a suggestion rather than a blocker.
