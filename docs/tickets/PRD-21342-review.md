@@ -1,0 +1,45 @@
+# PRD-21342 · Code review
+
+Status: frozen @ 2145d53
+
+## Round 1 · 2026-11-05 · reviewed ee0fa8d (base 0dc30c9)
+
+Verdict: changes requested
+
+### Findings
+
+1. [must-fix] src/digitalocean_functions_mcp/client.py:116-120 — The retry loop honors DigitalOcean's `Retry-After` header without capping it against the remaining retry budget: `delay = _retry_after_seconds(response); ...; await asyncio.sleep(delay)` sleeps for whatever `Retry-After` says (confirmed with a one-off repro test: a single `429` response with `Retry-After: 130` keeps the call asleep past the 5s `asyncio.wait_for` cutoff used to probe it, i.e. it would run for ~130s on that one attempt alone). The budget check at line 100 (`if elapsed >= MAX_TOTAL_SECONDS: break`) only runs *before* the next attempt, not before the `sleep` that is about to happen, so a single large `Retry-After` value blows straight through it. This breaks AC16 ("retried with bounded backoff (total time under 120s) ... never an unhandled exception" — here it is a bounded-exception promise, not an unhandled one, but the stated time bound is violated) and the SOP §5 mandatory rule "单次工具调用总耗时（含重试）必须 < 120s". `test_transient_429_is_retried_then_succeeds` in `tests/test_tools.py` only exercises `Retry-After: 0`, so this gap was never exercised by the self-test suite. Fix: clamp the honored delay to what is left of the budget, e.g. `delay = min(delay, max(0.0, MAX_TOTAL_SECONDS - elapsed))` (and the same for the plain-backoff branch for consistency), so one slow/adversarial upstream response can no longer hold a tool call open past the 120s cap; add a test with a large `Retry-After` value to lock this in.
+
+### Suggestions (not blocking)
+
+2. [suggestion] src/digitalocean_functions_mcp/tools/namespaces.py:26, triggers.py:32, access_keys.py:30 — The three `list_*` tools return every item DigitalOcean's API gives back with no `limit`/`page` parameter, relying only on `serialization.dumps`'s defensive 20,000-character truncation. SOP §2.5 asks `list` tools for a `limit` param (default ≤50, hard cap ≤200) and "绝不无上限返回全量" (§2.5 is marked "应当", not "必须"). The tech design explicitly reasons about this (DigitalOcean documents no pagination for these three resource groups) and the char-cap fallback does prevent an unbounded response, so this is not blocking, but a `limit` parameter would be a cleaner fit for the SOP's token-economy guidance if DigitalOcean ever returns a very large list.
+3. [suggestion] src/digitalocean_functions_mcp/serialization.py:34-39 — When a payload larger than 20,000 characters is not a dict with a list-valued key (e.g. a single large object), `_truncate` falls back to a raw string slice (`text[:MAX_RESPONSE_CHARS]`), which can produce invalid JSON for the tool's caller. Noted as "not expected to be hit in practice" in the module docstring, which matches what DigitalOcean's documented response shapes look like for these three resource groups — leaving as a suggestion rather than a blocker.
+
+### Fixes (round 1)
+
+Only the must-fix item was addressed; the two suggestions are left as-is (not blocking, not requested).
+
+1. **Must-fix 1 (`client.py:116-120`, Retry-After not capped)** — fixed in this round's commit on `dev/PRD-21342` (exact SHA in the `[DEV]` stub and `MCP:` line on the ticket). `_request_with_retries` now clamps the honored delay to what's left of the 120s budget on both retry branches: `delay = min(delay, max(0.0, MAX_TOTAL_SECONDS - elapsed))`, applied to the `Retry-After`-driven delay in the 429/5xx branch (`client.py:116-120` → now includes the clamp) and to `_backoff_delay(attempt)` in the network-exception branch, for consistency as the reviewer suggested. Net effect: a single large `Retry-After` (e.g. `130`) can no longer hold a tool call open past `MAX_TOTAL_SECONDS` (110s, under the 120s SOP cap) — it consumes the remaining budget in one clamped sleep and the loop's existing `elapsed >= MAX_TOTAL_SECONDS` check then stops it before a second real HTTP call, returning a bounded `upstream_error` instead of sleeping ~130s.
+   - New regression test: `tests/test_tools.py::test_large_retry_after_is_capped_to_remaining_budget` — mocks a `429` with `Retry-After: 130` followed by a `200`, patches `asyncio.sleep` to record the delay argument without actually waiting, and asserts: the recorded delay is `< 130` and `<= MAX_TOTAL_SECONDS`; only one real HTTP call is made (the clamped sleep consumes the whole remaining budget, so there is no second attempt); the call ends with a bounded `upstream_error` (`retryable: true`), not a hang or an unhandled exception.
+   - Retest: `uv run pytest -q` → **29 passed** (28 prior cases unchanged + the 1 new regression test), 16.39s, 0 failed, 0 skipped.
+   - Also reran: Chinese-character scan (`grep -rnP '[\x{4e00}-\x{9fff}]' --exclude-dir=.git --exclude-dir=.venv .`) — the only hits are quoted SOP text already present in this review file from round 1 (pre-existing, not touched by this fix, not production code); live smoke test (local `uv run python -m digitalocean_functions_mcp`) — `GET /health` → 200; `POST /mcp` with no credential header → 401; `POST /mcp initialize` + `tools/list` with a placeholder `X-Digitalocean-Token` → 200, returns all 13 tools with expected annotations. `gitleaks` is still not installed in this sandbox (same as round 0); no secret-shaped strings found by manual review of the diff.
+   - Synced with `origin/main` before and after the fix (`git merge origin/main` → already up to date both times; `main` has not moved since the repo was created).
+
+## Round 2 · 2026-11-05 · reviewed 2145d53 (base 0dc30c9)
+
+Verdict: approved
+
+### Findings
+
+None. Re-reviewed `ee0fa8d...HEAD` (commits `cdeca32`, `2145d53`): the only code change is the round-1 fix in `client.py:108` and `client.py:119-120`, plus the new regression test. Verified independently (not just re-reading the round-1 Fixes note):
+
+- `client.py:108` (network-exception branch) and `client.py:119-120` (429/5xx branch) both now clamp the honored delay with `min(delay, max(0.0, MAX_TOTAL_SECONDS - elapsed))` before `elapsed += delay; await asyncio.sleep(delay)` — a single `Retry-After: 130` (or an oversized backoff) can no longer push one sleep past the remaining 110s budget.
+- Traced the loop for `Retry-After: 130` at `elapsed=0`: clamped delay = `min(130, 110) = 110` → `elapsed = 110` → next iteration's `if elapsed >= MAX_TOTAL_SECONDS: break` fires before a second HTTP call, so the call ends in a bounded `upstream_error` instead of sleeping ~130s. Matches AC16 and SOP §5's < 120s total-call-time rule.
+- `tests/test_tools.py::test_large_retry_after_is_capped_to_remaining_budget` exercises exactly this path (429 with `Retry-After: 130`, `asyncio.sleep` patched to record without waiting) and asserts the clamp, the single HTTP call, and the bounded `upstream_error`. Independently reran `uv run pytest -q` in this worktree: **29 passed, 0 failed, 16.37s** — matches the round-1 Fixes note.
+- Diff scope is exactly the fix: `client.py` (+5/-1), `tests/test_tools.py` (+35), `docs/tickets/PRD-21342-review.md` (+24). No other files touched, nothing outside the must-fix's scope.
+- The two round-1 suggestions (list-tool `limit` param, raw-string truncation fallback) were left as-is, as stated — correct, they were marked non-blocking and weren't requested.
+- `main` has not moved since round 1 (`0dc30c9`), so no resync was needed before merge.
+
+### Fixes
+
+N/A — this round found nothing new to fix.
