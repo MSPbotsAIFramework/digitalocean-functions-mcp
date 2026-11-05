@@ -105,7 +105,7 @@ class DigitalOceanClient:
                 last_exc = exc
                 if attempt == MAX_RETRIES:
                     raise ToolError("upstream_error", f"Network error calling DigitalOcean: {exc}") from exc
-                delay = _backoff_delay(attempt)
+                delay = min(_backoff_delay(attempt), max(0.0, MAX_TOTAL_SECONDS - elapsed))
                 elapsed += delay
                 await asyncio.sleep(delay)
                 continue
@@ -116,6 +116,10 @@ class DigitalOceanClient:
                 delay = _retry_after_seconds(response)
                 if delay is None:
                     delay = _backoff_delay(attempt)
+                # PRD-21342 round 1: DigitalOcean's Retry-After is untrusted input --
+                # clamp it to what is left of the 120s SOP budget so one large value
+                # can't hold a tool call open past the cap (AC16 / SOP 5).
+                delay = min(delay, max(0.0, MAX_TOTAL_SECONDS - elapsed))
                 elapsed += delay
                 await asyncio.sleep(delay)
                 continue

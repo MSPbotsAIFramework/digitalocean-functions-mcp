@@ -1,8 +1,10 @@
+import asyncio
 import json
 
 import httpx
 import pytest
 
+from digitalocean_functions_mcp import client as client_module
 from digitalocean_functions_mcp.middleware import credential_context
 
 from conftest import BASE_URL, TOKEN_A
@@ -265,6 +267,39 @@ async def test_transient_429_is_retried_then_succeeds(tools, respx_mock):
     result = json.loads(await tools["digitalocean_list_namespaces"]())
     assert result == {"namespaces": [{"namespace_id": "fn-1"}]}
     assert route.call_count == 2
+
+
+async def test_large_retry_after_is_capped_to_remaining_budget(tools, respx_mock, monkeypatch):
+    """PRD-21342 round 1 fix: DigitalOcean's Retry-After is untrusted input.
+    A single large value must not be slept verbatim -- it has to be clamped
+    to what's left of the 120s SOP budget (AC16 / SOP 5). Clamping consumes
+    the whole remaining budget in that one sleep, so the loop correctly stops
+    there (bounded upstream_error) instead of making a second real HTTP call
+    130s later -- that is the fix: a bounded exception, not an unbounded sleep."""
+    route = respx_mock.get(f"{BASE_URL}/v2/functions/namespaces")
+    route.side_effect = [
+        httpx.Response(429, headers={"Retry-After": "130"}, json={"message": "rate limited"}),
+        httpx.Response(200, json={"namespaces": [{"namespace_id": "fn-1"}]}),
+    ]
+    recorded_delays: list[float] = []
+    real_sleep = asyncio.sleep
+
+    async def fake_sleep(delay: float) -> None:
+        recorded_delays.append(delay)
+        await real_sleep(0)  # yield control once without actually waiting out the delay
+
+    monkeypatch.setattr(client_module.asyncio, "sleep", fake_sleep)
+
+    result = json.loads(await tools["digitalocean_list_namespaces"]())
+
+    assert recorded_delays, "expected the 429 branch to sleep before giving up"
+    assert recorded_delays[0] < 130  # Retry-After must not be honored verbatim
+    assert recorded_delays[0] <= client_module.MAX_TOTAL_SECONDS
+    # Budget was fully spent on the one clamped sleep, so there is no second
+    # attempt 130s later -- the call fails bounded instead of hanging past 120s.
+    assert route.call_count == 1
+    assert result["error"]["code"] == "upstream_error"
+    assert result["error"]["retryable"] is True
 
 
 async def test_sustained_5xx_returns_bounded_upstream_error(tools, respx_mock):
